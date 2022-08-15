@@ -1,0 +1,22 @@
+version: 0.2
+phases:
+  pre_build:
+    commands:
+      - env
+      - 'export TAG=${CODEBUILD_RESOLVED_SOURCE_VERSION}'
+      - 'echo TAG: ${TAG}'
+    finally:
+      - ls -alh
+  build:
+    commands:
+      - 'docker build -t $ECR_REPO_URI:$TAG .'
+      - aws --version
+      - 'aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com'
+      - 'docker push $ECR_REPO_URI:$TAG'
+  post_build:
+    commands:
+      - echo "[{'name':'fargate-restapi-container','imageUri':'$ECR_REPO_URI:$TAG'}]" > imagedefinitions.json
+      - pwd; ls -al; cat imagedefinitions.json
+artifacts:
+  files:
+    - imagedefinitions.json
