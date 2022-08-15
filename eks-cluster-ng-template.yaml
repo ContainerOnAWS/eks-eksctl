@@ -1,0 +1,83 @@
+#
+# eksctl create nodegroup -f eks-cluster-ng.yaml
+#
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: eks-autoscaling-dev
+  region: us-east-1
+
+vpc:
+  id: <vpc-id>
+  subnets:
+    public:
+      us-east-1a: { id: <public-subnet1> }
+      us-east-1b: { id: <public-subnet2> }
+    private:
+      us-east-1a: { id: <private-subnet1> }
+      us-east-1b: { id: <private-subnet2> }
+
+managedNodeGroups:
+  - name: cpu-ng
+    instanceType: c5.xlarge
+    spot: true
+    minSize: 2
+    maxSize: 10
+    desiredCapacity: 2
+    privateNetworking: true
+    tags:
+      nodegroup-role: worker
+    iam:
+      attachPolicyARNs:
+        - arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy
+        - arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
+        - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+      withAddonPolicies:
+        ebs: true
+        autoScaler: true
+        awsLoadBalancerController: true
+        xray: true
+  - name: gpu-ng
+    instanceTypes: ["g4dn.xlarge", "g4dn.2xlarge", "g4dn.4xlarge"]
+    spot: true
+    minSize: 1
+    maxSize: 10
+    desiredCapacity: 1
+    privateNetworking: true
+    labels: { accelerator: nvidia-gpu }
+    tags:
+      nodegroup-role: worker
+    iam:
+      attachPolicyARNs:
+        - arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy
+        - arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
+        - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+      withAddonPolicies:
+        ebs: true
+        autoScaler: true
+        awsLoadBalancerController: true
+        xray: true
+# - name: gpu-ng-p2
+#   spot: true
+#   instanceType: p2.xlarge
+#   minSize: 2
+#   maxSize: 10
+#   desiredCapacity: 2
+#   privateNetworking: true
+#   labels: {accelerator: nvidia-gpu}
+#   tags:
+#     nodegroup-role: worker
+#   iam:
+#     attachPolicyARNs:
+#       - arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy
+#       - arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
+#       - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
+#       - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+#     withAddonPolicies:
+#       ebs: true
+#       autoScaler: true
+#       awsLoadBalancerController: true
+#       xray: true
